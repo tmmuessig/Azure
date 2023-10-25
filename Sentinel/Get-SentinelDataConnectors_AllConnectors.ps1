@@ -17,13 +17,8 @@ Function Get-KQLQueryResults
                 $QueryResults = Invoke-AzOperationalInsightsQuery -WorkspaceId $WorkplaceID -Query $KQLQuery -ErrorAction Stop -ErrorVariable QueryError | Select-Object -ExpandProperty Results
                 If ($QueryResults) 
                 {
-                    Try {
-                        $UTC = [datetime]::ParseExact("$($QueryResults.Time)", "yyyy-MM-ddTHH:mm:ss.fffffffZ", [System.Globalization.CultureInfo]::InvariantCulture)
-                        $UTC.ToLocalTime()
-                    }
-                    Catch {
-                        $QueryResults.Time
-                    }
+                    $UTC = [datetime]::Parse("$($QueryResults.Time)")
+                    Get-Date -Date ($UTC.ToLocalTime()) -Format 'MM/dd/yyyy hh:mm:ss tt'
                 }
                 Else
                 {
@@ -88,13 +83,14 @@ Foreach ($Sub in ($Subs))
                 #$Connector.Properties.connectorUiConfig.dataTypes.lastDataReceivedQuery
                 $AllConnectors = $Connector.Properties.connectorUiConfig.dataTypes.name
                 $Connector.Properties.connectorUiConfig.dataTypes | ForEach-Object {
+                    Write-Host "`t`t`t - $($_.lastDataReceivedQuery.split('|').Trim()[0])"
                     $tReport = [PSCustomObject]@{
                         #Kind                  = $Connector.kind
                         Title                 = $Connector.Properties.connectorUiConfig.title
                         AllDataTypes          = $AllConnectors
                         DataTypes             = $_.lastDataReceivedQuery.split('|').Trim()[0]
                         ID                    = $Connector.Properties.connectorUiConfig.id
-                        lastDataReceivedQuery = $_.properties.connectorUiConfig.dataTypes.lastDataReceivedQuery #$Connector.Properties.connectorUiConfig.dataTypes.lastDataReceivedQuery
+                        lastDataReceivedQuery = $_.lastDataReceivedQuery
                         LastLogsReceived      = (Get-KQLQueryResults -KQLQuery ($_.lastDataReceivedQuery) -WorkplaceId $Workspace.CustomerId)
                         Workspace             = $Workspace.Name
                         ResourceGroup         = $Workspace.ResourceGroupName
