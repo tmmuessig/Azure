@@ -94,7 +94,7 @@ $Subs = Get-AzSubscription
 # Initialize variable to hold final results
 $Report = New-Object System.Collections.ArrayList
 
-Foreach ($Sub in ($Subs))
+Foreach ($Sub in ($Subs)[1,4,7])
 {
     $Headers = Get-BearerToken -resourceUrl $resourceUrl 
 
@@ -142,11 +142,11 @@ Foreach ($Sub in ($Subs))
                     Write-Host "`t`t`t$($Connector.kind)" -ForegroundColor DarkMagenta
                     $tReport = [PSCustomObject]@{
                         Title                 = $Connector.kind
-                        AllDataTypes          = "foo"#$AllConnectors
-                        DataTypes             = "foo"#$_.lastDataReceivedQuery.split('|').Trim()[0]
-                        ID                    = "foo"#$Connector.Properties.connectorUiConfig.id
-                        lastDataReceivedQuery = "foo"#$_.lastDataReceivedQuery
-                        LastLogsReceived      = "foo"#(Get-KQLQueryResults -KQLQuery ($_.lastDataReceivedQuery) -WorkplaceId $Workspace.CustomerId)
+                        AllDataTypes          = ""
+                        DataTypes             = $connector.properties.datatypes.alerts.state
+                        ID                    = ""
+                        lastDataReceivedQuery = ""
+                        LastLogsReceived      = ""
                         Workspace             = $Workspace.Name
                         ResourceGroup         = $Workspace.ResourceGroupName
                         Subscription          = $Sub.Name
