@@ -45,12 +45,10 @@ Function Get-KQLQueryResults
 Function Get-BearerToken
 {
     [CmdletBinding()]
-    Param ()
+    Param ($resourceUrl)
     Begin {}
     Process
     {
-        #Get the Correct Management URL
-        $resourceUrl = (Get-AzContext).Environment.ResourceManagerUrl -replace ".$", ""
 
         # Build Bearer Token
         $token = (Get-AzAccessToken -ResourceUrl $resourceUrl).Token
@@ -62,7 +60,10 @@ Function Get-BearerToken
 
 #Connect to Azure
 Connect-AzAccount -Environment  -Tenant 
-$Headers = Get-BearerToken
+
+#Get the Correct Management URL
+$resourceUrl = (Get-AzContext).Environment.ResourceManagerUrl -replace ".$", ""
+
 
 # Get azure subs
 $Subs = Get-AzSubscription
@@ -70,9 +71,9 @@ $Subs = Get-AzSubscription
 # Initialize variable to hold final results
 $Report = New-Object System.Collections.ArrayList
 
-Foreach ($Sub in ($Subs))
+Foreach ($Sub in ($Subs)[2])
 {
-    $Headers = Get-BearerToken
+    $Headers = Get-BearerToken -resourceUrl $resourceUrl 
 
     $Context = Set-AzContext $Sub.Id
     Write-Host "$($Context.Subscription.Name) - SubId: $($Sub.Id)" -ForegroundColor Cyan
