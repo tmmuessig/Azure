@@ -7,6 +7,6 @@
 ![Issues](https://img.shields.io/github/issues/tmmuessig/Azure)
 ![Languages](https://img.shields.io/github/languages/top/tmmuessig/Azure)
 
-(https://img.shields.io/badge/Azure-Sentinel-Red)
+!(https://img.shields.io/badge/Azure-Sentinel-Red)
 
 Various scripts I've created to interact with Azure
