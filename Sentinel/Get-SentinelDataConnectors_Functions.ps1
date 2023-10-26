@@ -58,6 +58,29 @@ Function Get-BearerToken
     }
 }
 
+Function Get-SentinelConnectors
+{
+    [cmdletbinding()]
+    Param
+    (
+        $Connectors
+    )
+
+    Begin
+    {
+
+    }
+
+    Process
+    {
+
+    }
+
+    End
+    {
+        
+    }
+}
 #Connect to Azure
 Connect-AzAccount -Environment  -Tenant 
 
@@ -71,7 +94,7 @@ $Subs = Get-AzSubscription
 # Initialize variable to hold final results
 $Report = New-Object System.Collections.ArrayList
 
-Foreach ($Sub in ($Subs)[2])
+Foreach ($Sub in ($Subs))
 {
     $Headers = Get-BearerToken -resourceUrl $resourceUrl 
 
@@ -81,7 +104,7 @@ Foreach ($Sub in ($Subs)[2])
     $Workspaces = Get-AzOperationalInsightsWorkspace 
     Foreach ($Workspace in ($Workspaces ))
     {
-        Write-Host "`t -- $($Workspace.Name) -- " -NoNewline
+        Write-Host "`t - $($Workspace.Name) " -NoNewline -ForegroundColor Cyan
         $Url = "$resourceUrl/subscriptions/$($Sub.Id)/resourceGroups/$($Workspace.ResourceGroupName)/providers/Microsoft.OperationalInsights/workspaces/$($Workspace.Name)/providers/Microsoft.SecurityInsights/dataConnectors?api-version=2023-09-01-preview"
         Try
         {
@@ -89,24 +112,47 @@ Foreach ($Sub in ($Subs)[2])
             Write-Host "Sentinel Onboarded" -ForegroundColor Green
             foreach ($Connector in ($results.value | Where-Object { $_.Kind -ne 'AzureSecurityCenter' } | Select-object Kind, Properties))
             {
-                Write-Host "`t`t * $($Connector.properties.connectorUiConfig.title)"
-                #$Connector.Properties.connectorUiConfig.dataTypes.lastDataReceivedQuery
-                $AllConnectors = $Connector.Properties.connectorUiConfig.dataTypes.name
-                $Connector.Properties.connectorUiConfig.dataTypes | ForEach-Object {
-                    Write-Host "`t`t`t - $($_.lastDataReceivedQuery.split('|').Trim()[0])"
+                If ($Connector.kind -like "*icUI")
+                {
+                    Write-Host "`t`t * $($Connector.properties.connectorUiConfig.title)" -ForegroundColor Green
+                    #$Connector.Properties.connectorUiConfig.dataTypes.lastDataReceivedQuery
+                    $AllConnectors = $Connector.Properties.connectorUiConfig.dataTypes.name
+                    $Connector.Properties.connectorUiConfig.dataTypes | ForEach-Object {
+                        Write-Host "`t`t`t - $($_.lastDataReceivedQuery.split('|').Trim()[0])" -ForegroundColor  Yellow
+                        $tReport = [PSCustomObject]@{
+                            #Kind                  = $Connector.kind
+                            Title                 = $Connector.Properties.connectorUiConfig.title
+                            AllDataTypes          = $AllConnectors
+                            DataTypes             = $_.lastDataReceivedQuery.split('|').Trim()[0]
+                            ID                    = $Connector.Properties.connectorUiConfig.id
+                            lastDataReceivedQuery = $_.lastDataReceivedQuery
+                            LastLogsReceived      = (Get-KQLQueryResults -KQLQuery ($_.lastDataReceivedQuery) -WorkplaceId $Workspace.CustomerId)
+                            Workspace             = $Workspace.Name
+                            ResourceGroup         = $Workspace.ResourceGroupName
+                            Subscription          = $Sub.Name
+                        }
+                        If ($tReport.Title -or $tReport.kind)
+                        {
+                            [void]$Report.Add($tReport)
+                        }
+                    }
+                }
+                Else
+                {
+                    Write-Host "`t`t`t$($Connector.kind)" -ForegroundColor DarkMagenta
                     $tReport = [PSCustomObject]@{
-                        #Kind                  = $Connector.kind
-                        Title                 = $Connector.Properties.connectorUiConfig.title
-                        AllDataTypes          = $AllConnectors
-                        DataTypes             = $_.lastDataReceivedQuery.split('|').Trim()[0]
-                        ID                    = $Connector.Properties.connectorUiConfig.id
-                        lastDataReceivedQuery = $_.lastDataReceivedQuery
-                        LastLogsReceived      = (Get-KQLQueryResults -KQLQuery ($_.lastDataReceivedQuery) -WorkplaceId $Workspace.CustomerId)
+                        Title                 = $Connector.kind
+                        AllDataTypes          = "foo"#$AllConnectors
+                        DataTypes             = "foo"#$_.lastDataReceivedQuery.split('|').Trim()[0]
+                        ID                    = "foo"#$Connector.Properties.connectorUiConfig.id
+                        lastDataReceivedQuery = "foo"#$_.lastDataReceivedQuery
+                        LastLogsReceived      = "foo"#(Get-KQLQueryResults -KQLQuery ($_.lastDataReceivedQuery) -WorkplaceId $Workspace.CustomerId)
                         Workspace             = $Workspace.Name
                         ResourceGroup         = $Workspace.ResourceGroupName
                         Subscription          = $Sub.Name
+
                     }
-                    If ($tReport.Title -or $tReport.kind)
+                    If ($tReport.Title)
                     {
                         [void]$Report.Add($tReport)
                     }
