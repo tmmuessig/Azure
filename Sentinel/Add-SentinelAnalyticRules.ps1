@@ -58,8 +58,14 @@ function Install-Module-If-Needed
 }
 
 switch ($Cloud){
-    Commercial { $CloudURI = "https://management.azure.com/subscriptions"}
-    Gov        { $CloudURI = "https://management.usgovcloudapi.net/subscriptions"}
+    Commercial { $CloudURI = "https://management.azure.com/subscriptions"
+                 $ConnectParam = @{Environment = "AzureCloud"
+                                   ErrorAction = "Stop"}
+               }
+    Gov        { $CloudURI = "https://management.usgovcloudapi.net/subscriptions"
+                 $ConnectParam = @{Environment = "AzureUSGovernment"
+                                   ErrorAction = "Stop"}
+               }
 }
 
 #! Install Az Accounts Module If Needed
@@ -69,7 +75,7 @@ Install-Module-If-Needed Az.Accounts
 Try
 {
     Write-Verbose "Connecting to Azure Cloud..."
-    Connect-AzAccount -ErrorAction Stop | Out-Null
+    Connect-AzAccount @ConnectParam | Out-Null
 }
 Catch
 {
