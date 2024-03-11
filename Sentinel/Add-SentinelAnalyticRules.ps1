@@ -17,6 +17,7 @@ Module : Az Module
 .LINK
 To provide feedback or for further assistance please visit:
 https://charbelnemnom.com
+Orignial Source: https://charbelnemnom.com/set-microsoft-sentinel-analytics-rules-at-scale/
 
 .EXAMPLE
 .\Set-AnalyticsRules.ps1 -SubscriptionId <SUB-ID> -ResourceGroup <RG-Name> -WorkspaceName <Log-Analytics-Name> -SolutionName <Source-Name> -enableRules [Yes] -Verbose
