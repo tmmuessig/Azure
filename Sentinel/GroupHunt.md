@@ -1,3 +1,6 @@
+# KQL Hunting for group Adds and Removals
+
+```kql
 let TimeSpan = ago(30d);
 let filterValue = "";
 AuditLogs
@@ -10,3 +13,4 @@ AuditLogs
 | where Actor != "Azure AD Identity Governance - Directory Management"
 | where (UserPrincipalName contains filterValue or filterValue == "" or Actor contains filterValue)
 | project TimeGenerated, Actor, OperationName, UserPrincipalName, GroupDetails
+```
