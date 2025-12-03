@@ -229,10 +229,10 @@ foreach ($contentTemplate in $contentTemplates) {
             throw "Error when enabling Analytics rule: $($rule.properties.displayName)"
         }        
         If ($enableRules -eq "Yes") {
-            Write-Verbose "Creating and Enabling Analytic rule: $($rule.properties.displayName)"
+            Write-Host "Creating and Enabling Analytic rule: $($rule.properties.displayName)"
         }
         Else {
-            Write-Verbose "Creating Analytic rule: $($rule.properties.displayName)"
+            Write-Host "Creating Analytic rule: $($rule.properties.displayName)"
         }
         
     }
@@ -252,7 +252,7 @@ foreach ($contentTemplate in $contentTemplates) {
                 Write-Host $resultMetadata.Content
                 throw "Error when updating Metadata for Analytic rule: $($rule.properties.displayName)"
             }
-            Write-Verbose "Updating Metadata for Analytic rule: $($rule.properties.displayName)"
+            Write-Host "Updating Metadata for Analytic rule: $($rule.properties.displayName)"
         }
         catch {
             Write-Error $_ -ErrorAction Continue
