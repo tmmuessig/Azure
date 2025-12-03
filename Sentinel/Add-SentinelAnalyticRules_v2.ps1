@@ -29,23 +29,33 @@ The "Preview" and "Deprecated" rule templates can be also excluded by setting th
 param (
     [Parameter(Position = 0, Mandatory = $true, HelpMessage = 'Enter Azure Subscription ID')]
     [string]$subscriptionId,
+    
     [Parameter(Position = 1, Mandatory = $true, HelpMessage = 'Enter Resource Group Name where Microsoft Sentinel is deployed')]
     [string]$resourceGroupName,
+    
     [Parameter(Position = 2, Mandatory = $true, HelpMessage = 'Enter Log Analytics Workspace Name')]
     [string]$workspaceName,    
+    
     [Parameter(Position = 3, Mandatory = $true, HelpMessage = 'Enter Microsoft Sentinel Content Hub Solution Name')]
     [string]$solutionName,
+    
     [Parameter(Position = 4, Mandatory = $false, HelpMessage = 'Exclude Rule Templates Names i.e: @("ABC","DEF")')]
     [ValidateNotNullOrEmpty()]
     [array]$excludeRuleTemplates,
+    
     [Parameter(Position = 5, Mandatory = $false, HelpMessage = 'Exclude [Preview] and [Deprecated] Rule Templates [Yes/No]')]
     [ValidateNotNullOrEmpty()]
     [ValidateSet("Yes", "No")]
     [String]$excludePreviewDeprecated = 'Yes',
+    
     [Parameter(Position = 6, Mandatory = $false, HelpMessage = 'Enable Rules at Creation Time [Yes/No]')]
     [ValidateNotNullOrEmpty()]
     [ValidateSet("Yes", "No")]
-    [String]$enableRules = 'No'
+    [String]$enableRules = 'No',
+    
+    [Parameter(Position = 7, Mandatory = $false, HelpMessage = "Cloud environment to connect to")]
+    [validateset("Commercial","Gov")]
+    [string]$Cloud
 )
 
 #! Install Az Module If Needed
@@ -65,10 +75,28 @@ function Install-Module-If-Needed {
 #! Install Az Accounts Module If Needed
 Install-Module-If-Needed Az.Accounts
 
+switch ($Cloud)
+{
+    Commercial
+    {
+        $CloudURI = "https://management.azure.com/subscriptions"
+        $ConnectParam = @{Environment = "AzureCloud"
+            ErrorAction               = "Stop"
+        }
+    }
+    Gov
+    {
+        $CloudURI = "https://management.usgovcloudapi.net/subscriptions"
+        $ConnectParam = @{Environment = "AzureUSGovernment"
+            ErrorAction               = "Stop"
+        }
+    }
+}
+
 #! Check Azure Connection
 Try { 
     Write-Verbose "Connecting to Azure Cloud..." 
-    Connect-AzAccount -ErrorAction Stop | Out-Null 
+    Connect-AzAccount @ConnectParam -ErrorAction Stop | Out-Null 
 }
 Catch { 
     Write-Warning "Cannot connect to Azure Cloud. Please check your credentials. Exiting!" 
@@ -95,13 +123,13 @@ $authHeader.Add("Content-Type", "application/json")
 $authHeader.Add("Authorization", "Bearer $AzureAccessToken")
 
 # Get Content Product Packages
-$contentURI = "https://management.azure.com/subscriptions/$subscriptionid/resourceGroups/$resourceGroupName/providers/Microsoft.OperationalInsights/workspaces/$workspaceName/providers/Microsoft.SecurityInsights/contentProductPackages$($apiVersion)"
+$contentURI = "$CloudURI/$subscriptionid/resourceGroups/$resourceGroupName/providers/Microsoft.OperationalInsights/workspaces/$workspaceName/providers/Microsoft.SecurityInsights/contentProductPackages$($apiVersion)"
 $contentResponse = (Invoke-RestMethod $contentURI -Method 'GET' -Headers $authHeader).value
 $solutions = $contentResponse | Where-Object { $null -ne $_.properties.version }
 $solution = ($solutions | Where-Object { $_.properties.displayName -eq "$solutionName" }).properties.contentId
 
 # Get Content Templates
-$contentURI = "https://management.azure.com/subscriptions/$subscriptionid/resourceGroups/$resourceGroupName/providers/Microsoft.OperationalInsights/workspaces/$workspaceName/providers/Microsoft.SecurityInsights/contentTemplates$($apiVersion)"
+$contentURI = "$CloudURI/$subscriptionid/resourceGroups/$resourceGroupName/providers/Microsoft.OperationalInsights/workspaces/$workspaceName/providers/Microsoft.SecurityInsights/contentTemplates$($apiVersion)"
 $contentResponse = (Invoke-RestMethod $contentURI -Method 'GET' -Headers $authHeader).value
 
 try {
