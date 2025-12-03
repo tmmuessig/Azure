@@ -171,7 +171,7 @@ Write-Verbose "$($contentTemplates.count) Analytic Rules found for: [$solutionNa
 
 foreach ($contentTemplate in $contentTemplates) {
     $ruleName = $contentTemplate.name
-    $ruleTemplateURI = "https://management.azure.com/subscriptions/$subscriptionid/resourceGroups/$resourceGroupName/providers/Microsoft.OperationalInsights/workspaces/$workspaceName/providers/Microsoft.SecurityInsights/contentTemplates/$($ruleName)$($apiVersion)"
+    $ruleTemplateURI = "$CloudURI/$subscriptionid/resourceGroups/$resourceGroupName/providers/Microsoft.OperationalInsights/workspaces/$workspaceName/providers/Microsoft.SecurityInsights/contentTemplates/$($ruleName)$($apiVersion)"
     $ruleResponse = Invoke-RestMethod $ruleTemplateURI -Method 'GET' -Headers $authHeader -Verbose:$false    
         
     $ruleProperties = $ruleResponse.properties.mainTemplate.resources | Where-Object type -eq 'Microsoft.OperationalInsights/workspaces/providers/metadata' | Select-Object properties     
